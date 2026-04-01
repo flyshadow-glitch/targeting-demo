@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ADC HCP Targeting — Layer Model Demo</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background: #f5f5f3; color: #111; min-height: 100vh; display: flex; align-items: flex-start; justify-content: center; padding: 2rem 1rem; }
+  .card { background: #fff; border-radius: 16px; border: 0.5px solid rgba(0,0,0,0.1); padding: 2rem; width: 100%; max-width: 860px; }
+  .header { margin-bottom: 1.75rem; }
+  .header h1 { font-size: 17px; font-weight: 500; color: #111; margin-bottom: 4px; }
+  .header p { font-size: 13px; color: #777; }
+  .section-label { font-size: 10px; font-weight: 600; color: #999; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 10px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 1.5rem; }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 12px; color: #666; }
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .scenarios { margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 8px; }
+  .scenario-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+  .scenario-row .row-label { font-size: 11px; color: #999; min-width: 72px; }
+  .btn { font-size: 12px; padding: 5px 12px; border-radius: 8px; border: 0.5px solid rgba(0,0,0,0.18); background: #fff; color: #555; cursor: pointer; transition: background 0.12s, color 0.12s, border-color 0.12s; }
+  .btn:hover { background: #f2f2f0; color: #111; }
+  .btn.active.s1 { background: #185FA5; border-color: #185FA5; color: #fff; }
+  .btn.active.s2 { background: #0F6E56; border-color: #0F6E56; color: #fff; }
+  .btn.active.s3 { background: #534AB7; border-color: #534AB7; color: #fff; }
+  .btn.active.s4 { background: #993C1D; border-color: #993C1D; color: #fff; }
+  .desc-bar { font-size: 13px; color: #666; background: #f8f8f6; padding: 9px 13px; border-radius: 8px; margin-bottom: 1.25rem; min-height: 36px; line-height: 1.5; }
+  .desc-bar strong { color: #111; font-weight: 500; }
+  .tbl-wrap { overflow-x: auto; border-radius: 12px; border: 0.5px solid rgba(0,0,0,0.1); margin-bottom: 1rem; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 580px; }
+  thead th { padding: 9px 13px; text-align: left; font-size: 11px; font-weight: 500; color: #888; background: #f8f8f6; border-bottom: 0.5px solid rgba(0,0,0,0.08); white-space: nowrap; }
+  thead th.key { color: #222; }
+  .dummy-badge { display: inline-block; font-size: 9px; background: #eee; color: #bbb; border-radius: 4px; padding: 1px 4px; margin-left: 4px; vertical-align: middle; letter-spacing: 0.04em; font-weight: 600; }
+  tbody tr { border-bottom: 0.5px solid rgba(0,0,0,0.06); transition: opacity 0.15s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody td { padding: 9px 13px; color: #111; white-space: nowrap; }
+  tbody tr.dim td { opacity: 0.18; }
+  tbody tr.match td.hl-s1 { background: rgba(24,95,165,0.07); }
+  tbody tr.match td.hl-s2 { background: rgba(15,110,86,0.07); }
+  tbody tr.match td.hl-s3 { background: rgba(83,74,183,0.07); }
+  tbody tr.match td.hl-s4 { background: rgba(153,60,29,0.07); }
+  .pill { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 11px; font-weight: 500; }
+  .pill-co      { background: #E6F1FB; color: #0C447C; }
+  .pill-nt      { background: #F1EFE8; color: #444441; }
+  .pill-endo    { background: #EAF3DE; color: #27500A; }
+  .pill-pedendo { background: #FAEEDA; color: #633806; }
+  .pill-tag     { background: #FCEBEB; color: #791F1F; }
+  .pill-notag   { background: #f2f2f0; color: #aaa; }
+  .npi-cell { font-family: 'SF Mono', 'Fira Mono', monospace; font-size: 11px; color: #aaa; letter-spacing: 0.04em; }
+  .count-bar { display: flex; align-items: baseline; gap: 8px; }
+  .count-num { font-size: 20px; font-weight: 500; color: #111; }
+  .count-label { font-size: 12px; color: #888; }
+  .footer { margin-top: 2rem; padding-top: 1rem; border-top: 0.5px solid rgba(0,0,0,0.08); font-size: 11px; color: #bbb; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="header">
+    <h1>HCP targeting — layer model</h1>
+    <p>Each column is an independent filter. Any targeting objective is a combination of one or more columns — no new list needed per campaign. NPI numbers are dummy values for illustration only.</p>
+  </div>
+
+  <div class="section-label">Targeting scenario</div>
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#185FA5"></div>Target type</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#0F6E56"></div>Specialty</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#534AB7"></div>Segment</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#993C1D"></div>Tag</div>
+  </div>
+
+  <div class="scenarios">
+    <div class="scenario-row">
+      <span class="row-label">Target type</span>
+      <button class="btn s1" onclick="setScene('co',this)">All COs</button>
+      <button class="btn s1" onclick="setScene('nt',this)">All NTs</button>
+    </div>
+    <div class="scenario-row">
+      <span class="row-label">Specialty</span>
+      <button class="btn s2" onclick="setScene('endo',this)">All Endo</button>
+      <button class="btn s2" onclick="setScene('pedendo',this)">All Ped Endo</button>
+      <button class="btn s2" onclick="setScene('both-spec',this)">Endo + Ped Endo</button>
+    </div>
+    <div class="scenario-row">
+      <span class="row-label">Segment</span>
+      <button class="btn s3" onclick="setScene('co-dex',this)">CO Dexcom Loyalists</button>
+      <button class="btn s3" onclick="setScene('nt-dab',this)">NT CGM Dabblers</button>
+    </div>
+    <div class="scenario-row">
+      <span class="row-label">Tag</span>
+      <button class="btn s4" onclick="setScene('low-ret',this)">Low Retention (any)</button>
+      <button class="btn s4" onclick="setScene('co-low',this)">CO + Low Retention</button>
+    </div>
+  </div>
+
+  <div class="desc-bar" id="desc">Select a scenario above to see which HCPs match.</div>
+
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>NPI <span class="dummy-badge">DUMMY</span></th>
+          <th class="key">CO_NT</th>
+          <th class="key">Specialty</th>
+          <th class="key">Behavior segment</th>
+          <th class="key">Retention tag</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+
+  <div class="count-bar">
+    <span class="count-num" id="match-count">—</span>
+    <span class="count-label" id="match-label">Select a scenario above to filter.</span>
+  </div>
+
+  <div class="footer">Prototype — Abbott Diabetes Care · Analytics · April 2026</div>
+</div>
+
+<script>
+const rows = [
+  {npi:'0000000001', cot:'CO', spec:'ENDO',     seg:'Dexcom Loyalists',      tag:true},
+  {npi:'0000000002', cot:'CO', spec:'ENDO',     seg:'CGM Expert Spreaders',  tag:false},
+  {npi:'0000000003', cot:'CO', spec:'PED ENDO', seg:'Dexcom Loyalists',      tag:true},
+  {npi:'0000000004', cot:'CO', spec:'PED ENDO', seg:'CGM Dabblers',          tag:false},
+  {npi:'0000000005', cot:'NT', spec:'ENDO',     seg:'CGM Dabblers',          tag:true},
+  {npi:'0000000006', cot:'NT', spec:'ENDO',     seg:'CGM Expert Spreaders',  tag:false},
+  {npi:'0000000007', cot:'NT', spec:'PED ENDO', seg:'Brand Agnostic Nichers',tag:true},
+  {npi:'0000000008', cot:'NT', spec:'PED ENDO', seg:'FSL Loyalist',          tag:false},
+  {npi:'0000000009', cot:'CO', spec:'ENDO',     seg:'FSL Loyalist',          tag:false},
+  {npi:'0000000010', cot:'NT', spec:'ENDO',     seg:'Brand Agnostic Nichers',tag:true},
+];
+
+const scenarios = {
+  co:          { label:'Targeting all <strong>CO</strong> HCPs — filter: CO_NT = CO',                                               match:r=>r.cot==='CO',                             cls:'s1', hl:['cot'] },
+  nt:          { label:'Targeting all <strong>NT</strong> HCPs — filter: CO_NT = NT',                                               match:r=>r.cot==='NT',                             cls:'s1', hl:['cot'] },
+  endo:        { label:'Targeting all <strong>Endo</strong> (CO + NT) — filter: Specialty = ENDO',                                  match:r=>r.spec==='ENDO',                          cls:'s2', hl:['spec'] },
+  pedendo:     { label:'Targeting all <strong>Ped Endo</strong> (CO + NT) — filter: Specialty = PED ENDO',                         match:r=>r.spec==='PED ENDO',                      cls:'s2', hl:['spec'] },
+  'both-spec': { label:'Targeting <strong>Endo + Ped Endo</strong> regardless of target type — filter: Specialty IN (ENDO, PED ENDO)', match:r=>true,                                cls:'s2', hl:['spec'] },
+  'co-dex':    { label:'Targeting <strong>CO Dexcom Loyalists</strong> — filter: CO_NT = CO AND Segment = Dexcom Loyalists',        match:r=>r.cot==='CO'&&r.seg==='Dexcom Loyalists', cls:'s3', hl:['cot','seg'] },
+  'nt-dab':    { label:'Targeting <strong>NT CGM Dabblers</strong> — filter: CO_NT = NT AND Segment = CGM Dabblers',               match:r=>r.cot==='NT'&&r.seg==='CGM Dabblers',     cls:'s3', hl:['cot','seg'] },
+  'low-ret':   { label:'Targeting <strong>Low Retention</strong> HCPs across all types — filter: Retention Tag = Y',               match:r=>r.tag,                                    cls:'s4', hl:['tag'] },
+  'co-low':    { label:'Targeting <strong>CO + Low Retention</strong> — filter: CO_NT = CO AND Retention Tag = Y',                 match:r=>r.cot==='CO'&&r.tag,                      cls:'s4', hl:['cot','tag'] },
+};
+
+const colKeys = ['npi','cot','spec','seg','tag'];
+
+function renderRows(scene) {
+  const tbody = document.getElementById('tbody');
+  tbody.innerHTML = '';
+  let count = 0;
+  rows.forEach(r => {
+    const matched = !scene || scenarios[scene].match(r);
+    if (matched) count++;
+    const tr = document.createElement('tr');
+    tr.className = matched ? 'match' : 'dim';
+    const hlCols = scene ? scenarios[scene].hl : [];
+    const hlCls  = scene ? scenarios[scene].cls : '';
+    const cells = [
+      `<span class="npi-cell">${r.npi}</span>`,
+      `<span class="pill ${r.cot==='CO'?'pill-co':'pill-nt'}">${r.cot}</span>`,
+      `<span class="pill ${r.spec==='ENDO'?'pill-endo':'pill-pedendo'}">${r.spec}</span>`,
+      r.seg,
+      r.tag ? `<span class="pill pill-tag">Low retention</span>` : `<span class="pill pill-notag">—</span>`,
+    ];
+    cells.forEach((c, i) => {
+      const td = document.createElement('td');
+      td.innerHTML = c;
+      if (matched && hlCols.includes(colKeys[i])) td.className = 'hl-' + hlCls;
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+  document.getElementById('match-count').textContent = scene ? count : '—';
+  document.getElementById('match-label').textContent = scene ? `of ${rows.length} sample HCPs matched` : 'Select a scenario above to filter.';
+}
+
+function setScene(key, btn) {
+  document.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('desc').innerHTML = scenarios[key].label;
+  renderRows(key);
+}
+
+renderRows(null);
+</script>
+</body>
+</html>
